@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国际象棋对战平台</title>
+    <!-- chess.js 本地化：避免外网不可用导致 Chess 未定义 -->
+    <script type="module">
+        import { Chess } from '/static/chess.js';
+        window.Chess = Chess;
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+        }
+        
+        header p {
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                order: -1;
+            }
+        }
+        
+        /* 棋盘容器 */
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        #chessboard {
+            border: 4px solid #f39c12;
+            border-radius: 4px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        #chessboard img {
+            display: block;
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar h3 {
+            color: #f39c12;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        
+        /* 评估面板 */
+        .evaluation-panel {
+            text-align: center;
+        }
+        
+        .eval-bar {
+            height: 200px;
+            width: 30px;
+            margin: 0 auto 15px;
+            background: #333;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .eval-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            transition: height 0.5s ease;
+        }
+        
+        .prob-display {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        
+        .prob-box {
+            text-align: center;
+        }
+        
+        .prob-box.white {
+            color: #fff;
+        }
+        
+        .prob-box.black {
+            color: #888;
+        }
+        
+        .prob-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .prob-label {
+            font-size: 0.8em;
+            color: #aaa;
+        }
+        
+        /* 评论面板 */
+        .commentary-panel {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .commentary-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .commentary-move {
+            font-weight: bold;
+            color: #f39c12;
+            margin-bottom: 5px;
+        }
+        
+        .commentary-quality {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 8px;
+        }
+        
+        .quality-excellent { background: #27ae60; }
+        .quality-good { background: #2ecc71; }
+        .quality-normal { background: #3498db; }
+        .quality-inaccuracy { background: #f39c12; }
+        .quality-mistake { background: #e74c3c; }
+        
+        .commentary-text {
+            color: #ccc;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        /* 控制面板 */
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .control-group {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        
+        select, input, button {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 0.95em;
+            cursor: pointer;
+        }
+        
+        select:hover, input:hover {
+            border-color: #f39c12;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border: none;
+            margin-top: 5px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+        }
+        
+        button.secondary {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        button.secondary:hover {
+            border-color: #f39c12;
+            background: rgba(243, 156, 18, 0.1);
+        }
+        
+        /* 走法历史 */
+        .move-history {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+        
+        .move-item {
+            display: flex;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .move-item:nth-child(odd) {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .move-number {
+            color: #888;
+            width: 30px;
+        }
+        
+        .move-white, .move-black {
+            width: 60px;
+            color: #fff;
+        }
+        
+        /* 状态信息 */
+        .status-bar {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .status-bar.check {
+            background: rgba(231, 76, 60, 0.3);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* 游戏结束模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            border: 2px solid #f39c12;
+            animation: modalIn 0.3s ease;
+        }
+        
+        @keyframes modalIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .modal h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            color: #f39c12;
+        }
+        
+        .modal p {
+            margin-bottom: 20px;
+            color: #ccc;
+        }
+        
+        /* 移动着法提示 */
+        .highlight {
+            background: rgba(243, 156, 18, 0.5) !important;
+        }
+        
+        /* 新增：棋盘网格 */
+        .board-wrapper {
+            position: relative;
+        }
+        
+        .board-wrapper::before {
+            content: attr(data-turn);
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        /* LLM 状态指示 */
+        .llm-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        
+        .llm-status .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e74c3c;
+        }
+        
+        .llm-status.active .indicator {
+            background: #2ecc71;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 999;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #f39c12;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>♜ 国际象棋对战平台</h1>
+            <p>AI对战 · 实时评估 · 智能评论</p>
+        </header>
+        
+        <div class="main-content">
+            <!-- 左侧：控制面板 -->
+            <div class="sidebar">
+                <h3>⚙️ 游戏设置</h3>
+                
+                <div class="control-group">
+                    <label>难度等级</label>
+                    <select id="difficulty">
+                        <option value="1">🟢 简单 - 初学者</option>
+                        <option value="2" selected>🟡 中等 - 有经验</option>
+                        <option value="3">🔴 困难 - 大师级</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>执棋颜色</label>
+                    <select id="playerColor">
+                        <option value="white">白棋 (先手)</option>
+                        <option value="black">黑棋 (后手)</option>
+                    </select>
+                </div>
+                
+                <button onclick="newGame()">🎮 开始新游戏</button>
+                <button class="secondary" onclick="undoMove()">↩️ 悔棋</button>
+                
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                
+                <h3>🤖 AI评论设置</h3>
+                
+                <div class="control-group">
+                    <label>LLM 服务</label>
+                    <select id="llmBackend" onchange="updateLLMConfig()">
+                        <option value="none">❌ 禁用评论</option>
+                        <option value="ollama" selected>🦙 Ollama (本地)</option>
+                        <option value="opencode">🔮 OpenCode</option>
+                    </select>
+                </div>
+                
+                <div id="llmConfigPanel">
+                    <div class="control-group">
+                        <label>服务地址</label>
+                        <input type="text" id="llmBaseUrl" value="http://localhost:11434" placeholder="http://localhost:11434">
+                    </div>
+                    <div class="control-group">
+                        <label>模型名称</label>
+                        <input type="text" id="llmModel" value="qwen3:0.6b" placeholder="qwen3:0.6b">
+                    </div>
+                    <button onclick="connectLLM()">🔗 连接</button>
+                </div>
+                
+                <div class="llm-status" id="llmStatus">
+                    <div class="indicator"></div>
+                    <span>未连接</span>
+                </div>
+                
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                
+                <h3>📜 走法历史</h3>
+                <div class="move-history" id="moveHistory">
+                    <p style="color: #666; text-align: center;">暂无走法</p>
+                </div>
+            </div>
+            
+            <!-- 中间：棋盘 -->
+            <div class="board-container">
+                <div class="board-wrapper" data-turn="白方回合" id="boardWrapper">
+                    <canvas id="chessboard" width="480" height="480"></canvas>
+                </div>
+                
+                <div class="status-bar" id="statusBar">
+                    点击棋子开始游戏
+                </div>
+            </div>
+            
+            <!-- 右侧：评估和评论 -->
+            <div class="sidebar">
+                <h3>📊 局势评估</h3>
+                
+                <div class="evaluation-panel">
+                    <div class="eval-bar">
+                        <div class="eval-fill" id="evalFill" style="height: 50%;"></div>
+                    </div>
+                    
+                    <div class="prob-display">
+                        <div class="prob-box white">
+                            <div class="prob-value" id="whiteProb">50.0%</div>
+                            <div class="prob-label">白方胜率</div>
+                        </div>
+                        <div class="prob-box black">
+                            <div class="prob-value" id="blackProb">50.0%</div>
+                            <div class="prob-label">黑方胜率</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; color: #888; font-size: 0.9em;">
+                        评估分数: <span id="evalScore">0</span>
+                    </div>
+                </div>
+                
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                
+                <h3>💬 智能评论</h3>
+                <div class="commentary-panel" id="commentaryPanel">
+                    <p style="color: #666; text-align: center;">走一步棋开始评论</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏结束模态框 -->
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2 id="gameOverTitle">游戏结束</h2>
+            <p id="gameOverMessage">恭喜！</p>
+            <button onclick="newGame()">🎮 再来一局</button>
+        </div>
+    </div>
+    
+    <!-- 加载动画 -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>AI思考中...</div>
+    </div>
+    
+    <script src="/static/game.js"></script>
+</body>
+</html>
