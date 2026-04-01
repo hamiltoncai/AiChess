@@ -3,6 +3,7 @@ Chess Game Web Application
 支持本地运行的国际象棋游戏，带LLM评论功能
 """
 from flask import Flask, render_template, request, jsonify
+
 import chess
 import os
 import sys
@@ -29,7 +30,7 @@ def after_request(response):
 games = {}  # 存储多个游戏实例
 
 class GameSession:
-    """游戏会话"""
+    """游戏会话1"""
     def __init__(self, game_id: str):
         self.game_id = game_id
         self.board = chess.Board()

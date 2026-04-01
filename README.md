@@ -1,6 +1,6 @@
 # 国际象棋对战平台 ♟️
 
-一款本地运行的国际象棋游戏，支持AI对战、实时评估和LLM智能评论。
+一款本地运行的国际象棋游戏，支持AI对战、实时评估和LLM智能评论。Hello
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
