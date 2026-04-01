@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>退休金计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .form-label span {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            -webkit-appearance: none;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            background: #fafafa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 16px center;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: white;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-top: 8px;
+        }
+
+        .btn-calculate:active {
+            transform: scale(0.98);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 28px 20px;
+            text-align: center;
+            color: white;
+            display: none;
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .result-unit {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .result-detail {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: left;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            font-size: 14px;
+        }
+
+        .result-item-label {
+            opacity: 0.85;
+        }
+
+        .result-item-value {
+            font-weight: 600;
+        }
+
+        .disclaimer {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+
+        .formula-tip {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 16px;
+            font-size: 12px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .formula-tip strong {
+            color: #333;
+        }
+
+        @media (max-width: 360px) {
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>退休金计算器</h1>
+            <p>快速估算您的每月退休金</p>
+        </div>
+
+        <div class="card">
+            <div class="card-title">基本信息</div>
+            
+            <div class="form-group">
+                <label class="form-label">所在省份</label>
+                <select class="form-select" id="province">
+                    <option value="">请选择省份</option>
+                    <option value="beijing" data-salary="11761">北京市</option>
+                    <option value="shanghai" data-salary="12307">上海市</option>
+                    <option value="guangdong" data-salary="10205">广东省</option>
+                    <option value="zhejiang" data-salary="9789">浙江省</option>
+                    <option value="jiangsu" data-salary="9152">江苏省</option>
+                    <option value="shandong" data-salary="8016">山东省</option>
+                    <option value="henan" data-salary="6401">河南省</option>
+                    <option value="sichuan" data-salary="7595">四川省</option>
+                    <option value="hubei" data-salary="7397">湖北省</option>
+                    <option value="hunan" data-salary="7138">湖南省</option>
+                    <option value="hebei" data-salary="6919">河北省</option>
+                    <option value="fujian" data-salary="8319">福建省</option>
+                    <option value="liaoning" data-salary="7378">辽宁省</option>
+                    <option value="chongqing" data-salary="7941">重庆市</option>
+                    <option value="tianjin" data-salary="9485">天津市</option>
+                    <option value="jiangxi" data-salary="6608">江西省</option>
+                    <option value="shanxi" data-salary="6855">山西省</option>
+                    <option value="jilin" data-salary="6888">吉林省</option>
+                    <option value="heilongjiang" data-salary="6698">黑龙江省</option>
+                    <option value="anhui" data-salary="7427">安徽省</option>
+                    <option value="guangxi" data-salary="6621">广西壮族自治区</option>
+                    <option value="guizhou" data-salary="6891">贵州省</option>
+                    <option value="yunnan" data-salary="7213">云南省</option>
+                    <option value="shaanxi" data-salary="7361">陕西省</option>
+                    <option value="gansu" data-salary="6951">甘肃省</option>
+                    <option value="qinghai" data-salary="7738">青海省</option>
+                    <option value="neimenggu" data-salary="7610">内蒙古自治区</option>
+                    <option value="xinjiang" data-salary="7353">新疆维吾尔自治区</option>
+                    <option value="ningxia" data-salary="7281">宁夏回族自治区</option>
+                    <option value="hainan" data-salary="7886">海南省</option>
+                    <option value="xizang" data-salary="10751">西藏自治区</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">性别</label>
+                <select class="form-select" id="gender">
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                </select>
+            </div>
+
+            <div class="input-row">
+                <div class="form-group">
+                    <label class="form-label">当前年龄</label>
+                    <input type="number" class="form-input" id="currentAge" placeholder="如：35" min="18" max="65">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">预计退休年龄</label>
+                    <input type="number" class="form-input" id="retireAge" placeholder="如：60" min="50" max="65">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">缴费信息</div>
+            
+            <div class="form-group">
+                <label class="form-label">已缴费年限 (年)</label>
+                <input type="number" class="form-input" id="contributionYears" placeholder="如：10" min="0" max="40" step="0.5">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">个人账户储存额 (元)</label>
+                <input type="number" class="form-input" id="personalAccount" placeholder="如：80000" min="0">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    本人月均缴费工资 (元)
+                    <span>(或个人缴费基数)</span>
+                </label>
+                <input type="number" class="form-input" id="avgSalary" placeholder="如：8000" min="0">
+            </div>
+
+            <div class="formula-tip">
+                <strong>提示：</strong>个人账户储存额可从社保账户查询。<br>
+                月均缴费工资可估算：缴费基数 × 12 ÷ 缴费月数。
+            </div>
+        </div>
+
+        <button class="btn-calculate" onclick="calculate()">计算退休金</button>
+
+        <div class="result-card" id="resultCard">
+            <div class="result-label">预计每月退休金</div>
+            <div class="result-value" id="totalPension">0</div>
+            <div class="result-unit">元/月</div>
+            
+            <div class="result-detail">
+                <div class="result-item">
+                    <span class="result-item-label">基础养老金</span>
+                    <span class="result-item-value" id="basePension">0 元</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-item-label">个人账户养老金</span>
+                    <span class="result-item-value" id="accountPension">0 元</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-item-label">缴费年限</span>
+                    <span class="result-item-value" id="totalYears">0 年</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-item-label">计发月数</span>
+                    <span class="result-item-value" id="months">0 月</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            计算结果仅供参考，实际退休金以当地社保局核算为准。<br>
+            不同地区政策可能有差异，建议咨询当地社保部门。
+        </div>
+    </div>
+
+    <script>
+        function formatNumber(num) {
+            return num.toLocaleString('zh-CN', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+        }
+
+        function calculate() {
+            const province = document.getElementById('province').value;
+            const gender = document.getElementById('gender').value;
+            const currentAge = parseInt(document.getElementById('currentAge').value) || 0;
+            const retireAge = parseInt(document.getElementById('retireAge').value) || 0;
+            const contributionYears = parseFloat(document.getElementById('contributionYears').value) || 0;
+            const personalAccount = parseFloat(document.getElementById('personalAccount').value) || 0;
+            const avgSalary = parseFloat(document.getElementById('avgSalary').value) || 0;
+
+            const provinceSelect = document.getElementById('province');
+            const socialSalary = parseFloat(provinceSelect.options[provinceSelect.selectedIndex].dataset.salary) || 0;
+
+            if (!province) {
+                alert('请选择所在省份');
+                return;
+            }
+            if (retireAge <= 0 || contributionYears <= 0) {
+                alert('请填写完整的缴费信息');
+                return;
+            }
+            if (personalAccount <= 0 || avgSalary <= 0) {
+                alert('请填写个人账户储存额和月均缴费工资');
+                return;
+            }
+
+            const retirementMonths = gender === 'male' ? 139 : (retireAge === 50 ? 170 : 195);
+
+            const indexSalary = avgSalary;
+            const basePension = ((socialSalary + indexSalary) / 2) * contributionYears * 0.01;
+
+            const accountPension = personalAccount / retirementMonths;
+
+            const totalPension = basePension + accountPension;
+
+            document.getElementById('totalPension').textContent = formatNumber(Math.round(totalPension));
+            document.getElementById('basePension').textContent = formatNumber(Math.round(basePension)) + ' 元';
+            document.getElementById('accountPension').textContent = formatNumber(Math.round(accountPension)) + ' 元';
+            document.getElementById('totalYears').textContent = contributionYears + ' 年';
+            document.getElementById('months').textContent = retirementMonths + ' 月';
+
+            const resultCard = document.getElementById('resultCard');
+            resultCard.classList.add('show');
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        document.getElementById('currentAge').addEventListener('input', function() {
+            const currentAge = parseInt(this.value) || 0;
+            if (currentAge > 0) {
+                const gender = document.getElementById('gender').value;
+                const defaultRetireAge = gender === 'male' ? 60 : 55;
+                document.getElementById('retireAge').value = defaultRetireAge;
+            }
+        });
+
+        document.getElementById('gender').addEventListener('change', function() {
+            const defaultRetireAge = this.value === 'male' ? 60 : 55;
+            document.getElementById('retireAge').value = defaultRetireAge;
+        });
+    </script>
+</body>
+</html>
